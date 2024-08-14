@@ -98,8 +98,7 @@ fig.update_layout(
         'yanchor': 'top',
         'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
     },
-    autosize=False,   # This line disables the autoresize
-    width=1200,       # This line sets the width
+    autosize=True,   # This line disables the autoresize
     xaxis_tickangle=-45,
     barmode='group',
     xaxis=dict(
@@ -135,8 +134,7 @@ fig_futuro.update_layout(
         'yanchor': 'top',
         'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
     },
-    autosize=False,   # This line disables the autoresize
-    width=1200,       # This line sets the width
+    autosize=True,   # This line disables the autoresize
     xaxis_tickangle=-45,
     barmode='group',
     xaxis=dict(
