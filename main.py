@@ -6,6 +6,7 @@ import plotly.express as px
 import streamlit as st
 
 
+
 dynamo = boto3.resource('dynamodb', region_name='us-east-1')
 
 table = dynamo.Table('LASER_CLOSE_VALUE-dev')
@@ -65,6 +66,8 @@ df_futuro = convert_dict_to_df(costos_data_futuro)
 
 df['pv'] = 'PV ' + df['pv']
 df_futuro['pv'] = 'PV ' + df_futuro['pv']
+df['total_kg'] = round(df['total_kg']/1000, 2)
+df_futuro['total_kg'] = round(df_futuro['total_kg']/1000, 2)
 
 # Create a button for sorting
 col1, col2 = st.sidebar.columns(2)
@@ -111,7 +114,11 @@ fig.update_layout(
     ),
 )
 
-fig.update_traces(hovertemplate='PV=%{x}<br>total_kg=%{customdata[1]}<br>total_tiempo_corte=%{customdata[2]}<br>precio_kg=%{customdata[3]}<br>precio_tiempo=%{customdata[4]}')
+fig.update_traces(hovertemplate='%{x}<br>'
+                                'Kg = %{customdata[1]} Ton<br>'
+                                'Tiempo Corte = %{customdata[2]} min<br>'
+                                'Costo por Kg = %{customdata[3]:,.0f} Pesos<br>'
+                                'Costo por Tiempo = %{customdata[4]:,.0f} Pesos')
 st.plotly_chart(fig)
 
 
@@ -147,7 +154,11 @@ fig_futuro.update_layout(
     ),
 )
 
-fig_futuro.update_traces(hovertemplate='PV=%{x}<br>total_kg=%{customdata[1]}<br>total_tiempo_corte=%{customdata[2]}<br>precio_kg=%{customdata[3]}<br>precio_tiempo=%{customdata[4]}')
+fig_futuro.update_traces(hovertemplate='%{x}<br>'
+                                       'Kg = %{customdata[1]} Ton<br>'
+                                       'Tiempo Corte = %{customdata[2]} min<br>'
+                                       'Costo KG = %{customdata[3]:,.0f} Pesos<br>'
+                                       'Costo por Timepo = %{customdata[4]:,.0f} Pesos')
 st.plotly_chart(fig_futuro)
 
 
