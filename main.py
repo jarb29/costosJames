@@ -102,7 +102,7 @@ fig.update_layout(
         'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
     },
     autosize=True,   # This line disables the autoresize
-    xaxis_tickangle=-45,
+    xaxis_tickangle=-90,
     barmode='group',
     xaxis=dict(
         tickfont=dict(size=14), # Increase font size for x-axis values
@@ -142,7 +142,7 @@ fig_futuro.update_layout(
         'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
     },
     autosize=True,   # This line disables the autoresize
-    xaxis_tickangle=-45,
+    xaxis_tickangle=-90,
     barmode='group',
     xaxis=dict(
         tickfont=dict(size=14), # Increase font size for x-axis values
