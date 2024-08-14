@@ -58,7 +58,7 @@ summed_data = sum_up_values(grouped_data)
 summed_data_futuro = sum_up_values(grouped_data_futuro)
 
 costos_data = calculate_total_price(summed_data, precio_kg, precio_efectivo_minutos/60)
-costos_data_futuro = calculate_total_price(summed_data_futuro, precio_kg, precio_efectivo_minutos)
+costos_data_futuro = calculate_total_price(summed_data_futuro, precio_kg, precio_efectivo_minutos/60)
 
 df = convert_dict_to_df(costos_data)
 df_futuro = convert_dict_to_df(costos_data_futuro)
