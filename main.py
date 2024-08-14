@@ -19,6 +19,7 @@ response_futuro = table_futuro.scan()
 
 items = response['Items']
 items_averages = response_averages['Items']
+
 items_futuro = response_futuro['Items']
 
 # precio_kg = 360
@@ -34,6 +35,11 @@ while 'LastEvaluatedKey' in response_futuro:
 
 
 averages_ss = average_dict_values(items_averages[0]['details'])
+df_average = pd.DataFrame(list(averages_ss.items()), columns=['espesor', 'velocidad'])
+df_average['espesor'] = df_average['espesor'].astype(int)
+df_average = df_average.sort_values(by='espesor', ascending=True)
+df_average['espesor'] = 'e: ' + df_average['espesor'].astype(str)
+
 
 while 'LastEvaluatedKey' in response:
     response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
@@ -87,14 +93,14 @@ if tiempo_sort:
 custom_data=df.values.T.tolist()
 
 fig = px.bar(df, x='pv', y=['precio_kg', 'precio_tiempo'],
-             title='Precio KG and Precio Tiempo for each PV: PASADO',
-             labels={'value': 'Precio', 'variable': 'Tipo', 'pv': 'PV'},
+             title='Costo KG and Costo Tiempo for each PV: PASADO',
+             labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
              height=800, custom_data=custom_data)  # Increased plot height
 
 # Adjust x-axis labels and set barmode as 'group'
 fig.update_layout(
     title={
-        'text': "PASADO<br><sub>Precio KG and Precio Tiempo por cada PV<sub>",
+        'text': "PASADO<br><sub>Costo KG y Costo Tiempo por cada PV<sub>",
         'y': 0.9,
         'x': 0.5,
         'xanchor': 'center',
@@ -127,14 +133,14 @@ st.markdown("---")
 custom_data_futuro=df_futuro.values.T.tolist()
 
 fig_futuro = px.bar(df_futuro, x='pv', y=['precio_kg', 'precio_tiempo'],
-             title='Precio KG and Precio Tiempo por cada PV: FUTURO',
-             labels={'value': 'Precio', 'variable': 'Tipo', 'pv': 'PV'},
+             title='Costo KG y Costo Tiempo por cada PV: FUTURO',
+             labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
              height=800, custom_data=custom_data_futuro)  # Increased plot height
 
 # Adjust x-axis labels and set barmode as 'group'
 fig_futuro.update_layout(
     title={
-        'text': "FUTURO<br><sub>Precio KG and Precio Tiempo por cada PV<sub>",
+        'text': "FUTURO<br><sub>Costo KG y Costo Tiempo por cada PV<sub>",
         'y': 0.9,
         'x': 0.5,
         'xanchor': 'center',
@@ -161,4 +167,18 @@ fig_futuro.update_traces(hovertemplate='%{x}<br>'
                                        'Costo por Timepo = %{customdata[4]:,.0f} Pesos')
 st.plotly_chart(fig_futuro)
 
+st.markdown("---")
 
+
+fig_averages = px.bar(df_average, x='espesor',
+                      y='velocidad',
+                     color_discrete_sequence=px.colors.qualitative.Plotly, # let's add this
+                     title='Espesor Vs Velocidad')  # Increased plot height
+
+# Adjust x-axis labels and set barmode as 'group'
+fig_averages.update_layout(
+    autosize=True,
+
+)
+
+st.plotly_chart(fig_averages)
