@@ -6,7 +6,7 @@ import plotly.express as px
 import streamlit as st
 
 
-dynamo = boto3.resource('dynamodb')
+dynamo = boto3.resource('dynamodb', region_name='us-east-1')
 
 table = dynamo.Table('LASER_CLOSE_VALUE-dev')
 table_averages = dynamo.Table('AVERAGE_VALUE-dev')
