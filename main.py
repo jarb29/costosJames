@@ -91,8 +91,9 @@ if tiempo_sort:
 
 
 custom_data=df.values.T.tolist()
+df = df.rename(columns={'precio_kg': 'Costo Kg', 'precio_tiempo': 'Costo Tiempo'})
 
-fig = px.bar(df, x='pv', y=['precio_kg', 'precio_tiempo'],
+fig = px.bar(df, x='pv', y=['Costo Kg','Costo Tiempo'],
              title='Costo KG and Costo Tiempo for each PV: PASADO',
              labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
              height=800, custom_data=custom_data)  # Increased plot height
@@ -123,16 +124,17 @@ fig.update_layout(
 fig.update_traces(hovertemplate='%{x}<br>'
                                 'Kg = %{customdata[1]} Ton<br>'
                                 'Tiempo Corte = %{customdata[2]} min<br>'
-                                'Costo por Kg = %{customdata[3]:,.0f} Pesos<br>'
-                                'Costo por Tiempo = %{customdata[4]:,.0f} Pesos')
+                                'Costo Kg = %{customdata[3]:,.0f} Pesos<br>'
+                                'Costo Tiempo = %{customdata[4]:,.0f} Pesos')
 st.plotly_chart(fig)
 
 
 
 st.markdown("---")
 custom_data_futuro=df_futuro.values.T.tolist()
+df_futuro = df_futuro.rename(columns={'precio_kg': 'Costo Kg', 'precio_tiempo': 'Costo Tiempo'})
 
-fig_futuro = px.bar(df_futuro, x='pv', y=['precio_kg', 'precio_tiempo'],
+fig_futuro = px.bar(df_futuro, x='pv', y=['Costo Kg','Costo Tiempo'],
              title='Costo KG y Costo Tiempo por cada PV: FUTURO',
              labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
              height=800, custom_data=custom_data_futuro)  # Increased plot height
@@ -164,7 +166,7 @@ fig_futuro.update_traces(hovertemplate='%{x}<br>'
                                        'Kg = %{customdata[1]} Ton<br>'
                                        'Tiempo Corte = %{customdata[2]} min<br>'
                                        'Costo KG = %{customdata[3]:,.0f} Pesos<br>'
-                                       'Costo por Timepo = %{customdata[4]:,.0f} Pesos')
+                                       'Costo Tiempo = %{customdata[4]:,.0f} Pesos')
 st.plotly_chart(fig_futuro)
 
 st.markdown("---")
