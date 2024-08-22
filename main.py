@@ -23,7 +23,7 @@ items_averages = response_averages['Items']
 items_futuro = response_futuro['Items']
 
 precio_kg = st.sidebar.number_input('Enter value for precio_kg', value=360)
-precio_efectivo_minutos = st.sidebar.number_input('Enter value for precio_efectivo_minutos', value=200000)
+precio_efectivo_minutos = st.sidebar.number_input('Enter value for precio_efectivo_minutos', value=210000)
 
 
 while 'LastEvaluatedKey' in response_futuro:
