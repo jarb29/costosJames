@@ -25,7 +25,7 @@ items_futuro = response_futuro['Items']
 # precio_kg = 360
 # precio_efectivo_minutos = 260000/60
 precio_kg = st.sidebar.number_input('Enter value for precio_kg', value=360)
-precio_efectivo_minutos = st.sidebar.number_input('Enter value for precio_efectivo_minutos', value=260000)
+precio_efectivo_minutos = st.sidebar.number_input('Enter value for precio_efectivo_minutos', value=200000)
 
 
 
