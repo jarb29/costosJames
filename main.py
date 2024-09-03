@@ -68,9 +68,11 @@ df = convert_dict_to_df(costos_data)
 df_futuro = convert_dict_to_df(costos_data_futuro)
 
 df['pv'] = 'PV ' + df['pv']
-df_futuro['pv'] = 'PV ' + df_futuro['pv']
+if len(df_futuro) > 0:
+    df_futuro['pv'] = 'PV ' + df_futuro['pv']
 df['total_kg'] = round(df['total_kg']/1000, 2)
-df_futuro['total_kg'] = round(df_futuro['total_kg']/1000, 2)
+if len(df_futuro) > 0:
+    df_futuro['total_kg'] = round(df_futuro['total_kg']/1000, 2)
 
 # Create a button for sorting
 col1, col2 = st.sidebar.columns(2)
@@ -78,12 +80,14 @@ col1, col2 = st.sidebar.columns(2)
 kg_sort = col1.button('Ordenar precio_kg')
 if kg_sort:
     df = df.sort_values(by='precio_kg', ascending=False)
-    df_futuro = df_futuro.sort_values(by='precio_kg', ascending=False)
+    if len(df_futuro) > 0:
+        df_futuro = df_futuro.sort_values(by='precio_kg', ascending=False)
 
 tiempo_sort = col2.button('Ordenar precio_tiempo')
 if tiempo_sort:
     df = df.sort_values(by='precio_tiempo', ascending=False)
-    df_futuro = df_futuro.sort_values(by='precio_tiempo', ascending=False)
+    if len(df_futuro) > 0:
+        df_futuro = df_futuro.sort_values(by='precio_tiempo', ascending=False)
 
 
 
@@ -128,45 +132,46 @@ st.plotly_chart(fig)
 
 
 st.markdown("---")
-custom_data_futuro=df_futuro.values.T.tolist()
-df_futuro = df_futuro.rename(columns={'precio_kg': 'Costo Kg', 'precio_tiempo': 'Costo Tiempo'})
+if len(df_futuro) > 0:
+    custom_data_futuro=df_futuro.values.T.tolist()
+    df_futuro = df_futuro.rename(columns={'precio_kg': 'Costo Kg', 'precio_tiempo': 'Costo Tiempo'})
 
-fig_futuro = px.bar(df_futuro, x='pv', y=['Costo Kg','Costo Tiempo'],
-             title='Costo KG y Costo Tiempo por cada PV: FUTURO',
-             labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
-             height=800, custom_data=custom_data_futuro)  # Increased plot height
+    fig_futuro = px.bar(df_futuro, x='pv', y=['Costo Kg','Costo Tiempo'],
+                 title='Costo KG y Costo Tiempo por cada PV: FUTURO',
+                 labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
+                 height=800, custom_data=custom_data_futuro)  # Increased plot height
 
-# Adjust x-axis labels and set barmode as 'group'
-fig_futuro.update_layout(
-    title={
-        'text': "FUTURO<br><sub>Costo KG y Costo Tiempo por cada PV<sub>",
-        'y': 0.9,
-        'x': 0.5,
-        'xanchor': 'center',
-        'yanchor': 'top',
-        'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
-    },
-    autosize=True,   # This line disables the autoresize
-    xaxis_tickangle=-90,
-    barmode='group',
-    xaxis=dict(
-        tickfont=dict(size=14), # Increase font size for x-axis values
-        title_font=dict(size=14) # Increase font size for x-axis label
-    ),
-    yaxis=dict(
-        tickfont=dict(size=14), # Increase font size for y-axis values
-        title_font=dict(size=14) # Increase font size for y-axis label
-    ),
-)
+    # Adjust x-axis labels and set barmode as 'group'
+    fig_futuro.update_layout(
+        title={
+            'text': "FUTURO<br><sub>Costo KG y Costo Tiempo por cada PV<sub>",
+            'y': 0.9,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
+        },
+        autosize=True,   # This line disables the autoresize
+        xaxis_tickangle=-90,
+        barmode='group',
+        xaxis=dict(
+            tickfont=dict(size=14), # Increase font size for x-axis values
+            title_font=dict(size=14) # Increase font size for x-axis label
+        ),
+        yaxis=dict(
+            tickfont=dict(size=14), # Increase font size for y-axis values
+            title_font=dict(size=14) # Increase font size for y-axis label
+        ),
+    )
 
-fig_futuro.update_traces(hovertemplate='%{x}<br>'
-                                       'Kg = %{customdata[1]} Ton<br>'
-                                       'Tiempo Corte = %{customdata[2]} min<br>'
-                                       'Costo KG = %{customdata[3]:,.0f} Pesos<br>'
-                                       'Costo Tiempo = %{customdata[4]:,.0f} Pesos')
-st.plotly_chart(fig_futuro)
+    fig_futuro.update_traces(hovertemplate='%{x}<br>'
+                                           'Kg = %{customdata[1]} Ton<br>'
+                                           'Tiempo Corte = %{customdata[2]} min<br>'
+                                           'Costo KG = %{customdata[3]:,.0f} Pesos<br>'
+                                           'Costo Tiempo = %{customdata[4]:,.0f} Pesos')
+    st.plotly_chart(fig_futuro)
 
-st.markdown("---")
+    st.markdown("---")
 
 
 fig_averages = px.bar(df_average, x='espesor',
