@@ -103,6 +103,8 @@ for i in range(total_plots):
                  labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
                  height=800, custom_data=custom_data)  # Increased plot height
 
+
+
     # Adjust x-axis labels and set barmode as 'group'
     fig.update_layout(
         title={
