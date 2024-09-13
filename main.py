@@ -4,7 +4,7 @@ from itertools import groupby
 from operator import itemgetter
 import plotly.express as px
 import streamlit as st
-
+import math
 
 
 dynamo = boto3.resource('dynamodb', region_name='us-east-1')
@@ -91,43 +91,47 @@ if tiempo_sort:
 
 
 
-custom_data=df.values.T.tolist()
+
 df = df.rename(columns={'precio_kg': 'Costo Kg', 'precio_tiempo': 'Costo Tiempo'})
+total_plots = math.ceil(len(df) / 30)
+for i in range(total_plots):
 
-fig = px.bar(df, x='pv', y=['Costo Kg','Costo Tiempo'],
-             title='Costo KG and Costo Tiempo for each PV: PASADO',
-             labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
-             height=800, custom_data=custom_data)  # Increased plot height
+    df_chunk = df[i * 30: (i + 1) * 30]
+    custom_data = df_chunk.values.T.tolist()
+    fig = px.bar(df_chunk, x='pv', y=['Costo Kg','Costo Tiempo'],
+                 title='Costo KG and Costo Tiempo for each PV: PASADO',
+                 labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
+                 height=800, custom_data=custom_data)  # Increased plot height
 
-# Adjust x-axis labels and set barmode as 'group'
-fig.update_layout(
-    title={
-        'text': "PASADO<br><sub>Costo KG y Costo Tiempo por cada PV<sub>",
-        'y': 0.9,
-        'x': 0.5,
-        'xanchor': 'center',
-        'yanchor': 'top',
-        'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
-    },
-    autosize=True,   # This line disables the autoresize
-    xaxis_tickangle=-90,
-    barmode='group',
-    xaxis=dict(
-        tickfont=dict(size=14), # Increase font size for x-axis values
-        title_font=dict(size=14) # Increase font size for x-axis label
-    ),
-    yaxis=dict(
-        tickfont=dict(size=14), # Increase font size for y-axis values
-        title_font=dict(size=14) # Increase font size for y-axis label
-    ),
-)
+    # Adjust x-axis labels and set barmode as 'group'
+    fig.update_layout(
+        title={
+            'text': "PASADO<br><sub>Costo KG y Costo Tiempo por cada PV<sub>",
+            'y': 0.9,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
+        },
+        autosize=True,   # This line disables the autoresize
+        xaxis_tickangle=-45,
+        barmode='group',
+        xaxis=dict(
+            tickfont=dict(size=14), # Increase font size for x-axis values
+            title_font=dict(size=14) # Increase font size for x-axis label
+        ),
+        yaxis=dict(
+            tickfont=dict(size=14), # Increase font size for y-axis values
+            title_font=dict(size=14) # Increase font size for y-axis label
+        ),
+    )
 
-fig.update_traces(hovertemplate='%{x}<br>'
-                                'Kg = %{customdata[1]} Ton<br>'
-                                'Tiempo Corte = %{customdata[2]} min<br>'
-                                'Costo Kg = %{customdata[3]:,.0f} Pesos<br>'
-                                'Costo Tiempo = %{customdata[4]:,.0f} Pesos')
-st.plotly_chart(fig)
+    fig.update_traces(hovertemplate='%{x}<br>'
+                                    'Kg = %{customdata[1]} Ton<br>'
+                                    'Tiempo Corte = %{customdata[2]} min<br>'
+                                    'Costo Kg = %{customdata[3]:,.0f} Pesos<br>'
+                                    'Costo Tiempo = %{customdata[4]:,.0f} Pesos')
+    st.plotly_chart(fig)
 
 
 
