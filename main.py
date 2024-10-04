@@ -108,7 +108,7 @@ deberia_tiempo = round_to_two_decimals(precio_mes/tiempo_mes)
 
 
 
-st.title("Precios Laser Tiempo/Kg")
+st.title("Precios Laser Kg/Tiempo")
 st.markdown("---")
 
 # Custom CSS for colored metrics
@@ -151,35 +151,39 @@ def colored_metric(label: str, value: str, css_class: str):
     """, unsafe_allow_html=True)
 
 
-# Monthly Metrics
+# Vertical header and metrics
 st.markdown("### Métricas del Mes")
-metric_cols1 = st.columns(2)
+
+# Define columns layout for Monthly Metrics
+metric_cols1 = st.columns(3)
 with metric_cols1[0]:
     colored_metric("Total KG", f"{kg_mes} kg", "bg-total-kg")
 with metric_cols1[1]:
     colored_metric("Total Tiempo", f"{tiempo_mes} hours", "bg-total-time")
+with metric_cols1[2]:
+    colored_metric("Cobro por KG", f"${costo_kg}", "bg-cost-kg")
+
+
+# Vertical separator
 st.markdown("---")
 
-# Current Prices
-st.markdown("### Precios Actuales")
-metric_cols2 = st.columns(2)
-with metric_cols2[0]:
-    colored_metric("Cost por Tiempo", f"${costo_tiempo}", "bg-cost-time")
-with metric_cols2[1]:
-    colored_metric("Cost por KG", f"${costo_kg}", "bg-cost-kg")
-st.markdown("---")
-
-# Ideal Prices
+# Vertical header and metrics
 st.markdown("### Precios Ideales")
-metric_cols3 = st.columns(2)
-with metric_cols3[0]:
+
+# Define columns layout for Current Prices
+metric_cols2 = st.columns(3)
+with metric_cols2[0]:
+    colored_metric("Cobro por Tiempo", f"${costo_tiempo}", "bg-cost-time")
+with metric_cols2[1]:
     colored_metric("Ideal por KG", f"${deberia_kg}", "bg-deberia-kg")
-with metric_cols3[1]:
+with metric_cols2[2]:
     colored_metric("Ideal por Tiempo", f"${deberia_tiempo}", "bg-deberia-time")
 
-
-
+# Vertical separator
 st.markdown("---")
+
+
+
 
 # Calculate sum of 'total_kg'
 kg_mes = sum(df['total_kg'])
