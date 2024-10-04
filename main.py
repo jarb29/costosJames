@@ -108,7 +108,7 @@ deberia_tiempo = round_to_two_decimals(precio_mes/tiempo_mes)
 
 
 
-st.title("Metrics Overview")
+st.title("Precios Laser Tiempo/Kg")
 st.markdown("---")
 
 # Custom CSS for colored metrics
