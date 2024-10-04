@@ -189,3 +189,10 @@ def round_to_two_decimals(value: float) -> float:
 
 
 
+def round_to_two_decimals2(num):
+    """Rounds a number to two decimal places and formats it with thousands separators."""
+    formatted_num = "{:,.2f}".format(num).replace(",", ".")
+    # Remove the last two characters (".00") if they exist
+    if formatted_num.endswith(".00"):
+        formatted_num = formatted_num[:-3]
+    return formatted_num

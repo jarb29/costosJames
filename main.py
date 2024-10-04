@@ -98,18 +98,16 @@ costos_data_futuro = calculate_total_price(summed_data_futuro, precio_kg, precio
 
 df = convert_dict_to_df(costos_data)
 
-kg_mes = round_to_two_decimals(sum(df['total_kg']))
-tiempo_mes = round_to_two_decimals(sum(df['total_tiempo_corte'])/60)
-costo_kg = round_to_two_decimals(sum(df['precio_kg']))
-costo_tiempo = round_to_two_decimals(sum(df['precio_tiempo']))
+kg_mes = sum(df['total_kg'])
+tiempo_mes = sum(df['total_tiempo_corte'])/60
+costo_kg = sum(df['precio_kg'])
+costo_tiempo = sum(df['precio_tiempo'])
 
-deberia_kg = round_to_two_decimals(precio_mes/kg_mes)
-deberia_tiempo = round_to_two_decimals(precio_mes/tiempo_mes)
+deberia_kg = precio_mes/kg_mes
+deberia_tiempo = precio_mes/tiempo_mes
+tonFaltantes = max(0, precio_mes/precio_kg - kg_mes)
+laserFaltantes = max(0, precio_mes/precio_efectivo_minutos-tiempo_mes)
 
-
-
-st.title("Precios Laser Kg/Tiempo")
-st.markdown("---")
 
 # Custom CSS for colored metrics
 st.markdown(
@@ -135,18 +133,37 @@ st.markdown(
     .bg-cost-kg {background-color: #9C27B0;}
     .bg-deberia-kg {background-color: #F44336;}
     .bg-deberia-time {background-color: #3F51B5;}
+
+    /* Style for the smaller, differently colored value */
+    .small-value {
+        font-size: 14px; 
+        color: #111; 
+        margin-top: 5px;
+        font-weight: bold;
+    }
+    .posive-negative {
+        font-size: 14px; 
+        color: #111; 
+        margin-top: 5px;
+        font-weight: bold;
+    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-
 # Helper function to add a colored metric
-def colored_metric(label: str, value: str, css_class: str):
+def colored_metric(label: str, value: str, css_class: str, small_value: str = None,  diffenrence: float = None):
+    if diffenrence is not None:
+        diffenrence_str = "+" + str(round_to_two_decimals2(diffenrence)) if float(diffenrence) > 0 else "-" + str(round_to_two_decimals2(abs(diffenrence)))
+    else:
+        diffenrence_str = None
     st.markdown(f"""
         <div class="metric-container {css_class}">
             <div class="metric-label">{label}</div>
             <div class="metric-value">{value}</div>
+            {f'<div class="small-value">{small_value}</div>' if small_value else ''}
+            {f'<div class="posive-negative">{diffenrence_str}</div>' if diffenrence_str else ''}
         </div>
     """, unsafe_allow_html=True)
 
@@ -157,12 +174,14 @@ st.markdown("### Métricas del Mes")
 # Define columns layout for Monthly Metrics
 metric_cols1 = st.columns(3)
 with metric_cols1[0]:
-    colored_metric("Total KG", f"{kg_mes} kg", "bg-total-kg")
+    colored_metric("Total KG", f"{round_to_two_decimals(kg_mes/1000)} Ton", "bg-total-kg",
+                   small_value=f"Ton Faltantes: {round_to_two_decimals(tonFaltantes/1000)} Ton")
 with metric_cols1[1]:
-    colored_metric("Total Tiempo", f"{tiempo_mes} hours", "bg-total-time")
+    colored_metric("Total Tiempo", f"{round_to_two_decimals(tiempo_mes)} hours", "bg-total-time",
+                   small_value=f"LaserOn Faltante: {round_to_two_decimals(laserFaltantes)} Hr")
 with metric_cols1[2]:
-    colored_metric("Cobro por KG", f"${costo_kg}", "bg-cost-kg")
-
+    colored_metric("Cobro por KG", f"${round_to_two_decimals2(costo_kg)}", "bg-cost-kg", small_value=f"a ${precio_kg}",
+                   diffenrence=costo_kg - precio_mes)
 
 # Vertical separator
 st.markdown("---")
@@ -173,15 +192,17 @@ st.markdown("### Precios Ideales")
 # Define columns layout for Current Prices
 metric_cols2 = st.columns(3)
 with metric_cols2[0]:
-    colored_metric("Cobro por Tiempo", f"${costo_tiempo}", "bg-cost-time")
+    colored_metric("Cobro por Tiempo", f"${round_to_two_decimals2(costo_tiempo)}", "bg-cost-time", small_value=f"a ${round_to_two_decimals2(precio_efectivo_minutos)}",
+                   diffenrence=costo_tiempo - precio_mes)
 with metric_cols2[1]:
-    colored_metric("Ideal por KG", f"${deberia_kg}", "bg-deberia-kg")
+    colored_metric("Ideal por KG", f"${round_to_two_decimals(deberia_kg)}", "bg-deberia-kg", small_value=f"a ${round_to_two_decimals2(precio_mes)}",
+                   )
 with metric_cols2[2]:
-    colored_metric("Ideal por Tiempo", f"${deberia_tiempo}", "bg-deberia-time")
+    colored_metric("Ideal por Tiempo", f"${round_to_two_decimals2(deberia_tiempo)}", "bg-deberia-time", small_value=f"a ${round_to_two_decimals2(precio_mes)}",
+                   )
 
 # Vertical separator
 st.markdown("---")
-
 
 
 
