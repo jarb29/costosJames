@@ -195,11 +195,11 @@ with metric_cols2[0]:
     colored_metric("Cobro por Tiempo", f"${round_to_two_decimals2(costo_tiempo)}", "bg-cost-time", small_value=f"a ${round_to_two_decimals2(precio_efectivo_minutos)}",
                    diffenrence=costo_tiempo - precio_mes)
 with metric_cols2[1]:
-    colored_metric("Ideal por KG", f"${round_to_two_decimals(deberia_kg)}", "bg-deberia-kg", small_value=f"a ${round_to_two_decimals2(precio_mes)}",
-                   )
+    colored_metric("Ideal por KG", f"${round_to_two_decimals(deberia_kg)}", "bg-deberia-kg",
+                   small_value=f"a ${round_to_two_decimals2(precio_mes)}", diffenrence=precio_kg - deberia_kg)
 with metric_cols2[2]:
-    colored_metric("Ideal por Tiempo", f"${round_to_two_decimals2(deberia_tiempo)}", "bg-deberia-time", small_value=f"a ${round_to_two_decimals2(precio_mes)}",
-                   )
+    colored_metric("Ideal por Tiempo", f"${round_to_two_decimals2(deberia_tiempo)}", "bg-deberia-time",
+                   small_value=f"a ${round_to_two_decimals2(precio_mes)}", diffenrence=precio_efectivo_minutos - deberia_tiempo)
 
 # Vertical separator
 st.markdown("---")
