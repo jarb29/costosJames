@@ -41,14 +41,14 @@ with st.sidebar:
     default_years_index = years.index(cy)
     selected_month = st.sidebar.selectbox('Seleccione Mes', months, index=default_month_index)
     selected_year = st.sidebar.selectbox('Seleccione Año', years, index=default_years_index)
-    precio_mes = st.sidebar.number_input('Enter valor for Costo Mes', value=10000000)
+    precio_mes = st.sidebar.number_input('Valor para Costo/Mes', value=10000000)
     st.markdown("---")
 #######################
 # Dashboard Main Panel
 col = st.columns((2, 4, 4), gap='medium')
 
-precio_kg = st.sidebar.number_input('Enter valor for Costo por Kg', value=360)
-precio_efectivo_minutos = st.sidebar.number_input('Enter valor for Costo Hora/Corte', value=210000)
+precio_kg = st.sidebar.number_input('Valor para Costo por Kg', value=360)
+precio_efectivo_minutos = st.sidebar.number_input('Valor para Costo Hora/Corte', value=210000)
 
 
 while 'LastEvaluatedKey' in response_futuro:
