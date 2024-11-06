@@ -26,7 +26,7 @@ items_futuro = response_futuro['Items']
 
 months, years, cm, cy = get_months_and_years_since("01/04/2024")
 st.set_page_config(
-    page_title="Kupfer Costos Nave1/Laser",
+    page_title="Costo/Laser",
     layout="centered",
     page_icon="📉",
 
