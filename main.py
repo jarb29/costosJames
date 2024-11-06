@@ -39,7 +39,7 @@ with st.sidebar:
     st.title("📅 Nave1/Laser Costos")
     default_month_index = months.index(cm)-1 # here to control the month
     default_years_index = years.index(cy)
-    selected_month = st.sidebar.selectbox('Selecciones Mes', months, index=default_month_index)
+    selected_month = st.sidebar.selectbox('Seleccione Mes', months, index=default_month_index)
     selected_year = st.sidebar.selectbox('Seleccione Año', years, index=default_years_index)
     precio_mes = st.sidebar.number_input('Enter valor for Costo Mes', value=10000000)
     st.markdown("---")
