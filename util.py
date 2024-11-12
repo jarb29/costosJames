@@ -196,3 +196,29 @@ def round_to_two_decimals2(num):
     if formatted_num.endswith(".00"):
         formatted_num = formatted_num[:-3]
     return formatted_num
+
+
+def filter_by_close_month_year(data, month, year):
+    """
+    Filters the list of dictionaries by the 'closeAt' value based on the provided month and year
+
+    :param data: List of dictionaries containing the data
+    :param month: Month to filter by (1-12)
+    :param year: Year to filter by (e.g. 2024)
+    :return: Filtered list of dictionaries
+    """
+
+    filtered_data = []
+
+    for record in data:
+        # Parsing the 'closeAt' value to a datetime object
+        close_at_date = datetime.fromisoformat(record['closeAt'].replace("Z", "+00:00"))
+        # print(close_at_date , "close_at_date ")
+        # print(close_at_date.month, "MONTH")
+        # print(close_at_date.year, "YEAR")
+        # Checking if the month and year match
+        if close_at_date.month == month and close_at_date.year == year:
+            filtered_data.append(record)
+
+    return filtered_data
+

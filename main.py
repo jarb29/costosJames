@@ -67,21 +67,24 @@ while 'LastEvaluatedKey' in response:
     response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
     items.extend(response['Items'])
 
+items = filter_by_close_month_year(items,selected_month, selected_year)
 
 new_data = calculate_tiempo_corte(items, averages_ss)
 new_data_futuro = calculate_tiempo_corte(items_futuro, averages_ss)
+
+
 
 items.sort(key=itemgetter('pv'))
 grouped_data = {}
 for key, group in groupby(items, key=lambda x:x['pv']):
     grouped_data[key] = list(group)
 
+
 items_futuro.sort(key=itemgetter('pv'))
 
 grouped_data_futuro = {}
 for key, group in groupby(items_futuro, key=lambda x:x['pv']):
     grouped_data_futuro[key] = list(group)
-
 
 
 newest_dates = process_grouped_data(grouped_data)
