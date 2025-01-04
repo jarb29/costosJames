@@ -37,7 +37,12 @@ alt.themes.enable("dark")
 with st.sidebar:
     st.sidebar.image("data/logo.png", use_container_width=True)
     st.title("📅 Nave1/Laser Costos")
-    default_month_index = months.index(cm)-1 # here to control the month
+
+    if cm == 1:  # Assuming '1' corresponds to 'January'
+        default_month_index = months.index(cm)  # Leave as is
+    else:
+        default_month_index = months.index(cm) - 1  # Apply the formula
+
     default_years_index = years.index(cy)
     selected_month = st.sidebar.selectbox('Seleccione Mes', months, index=default_month_index)
     selected_year = st.sidebar.selectbox('Seleccione Año', years, index=default_years_index)
