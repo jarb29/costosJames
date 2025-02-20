@@ -36,7 +36,8 @@ def sum_up_values(data):
     summed_data = {}
     for pv, items in data.items():
         total_kg = sum(float(item['kg']) for item in items)
-        total_tiempo_corte = sum(item['tiempo_corte'] for item in items)
+
+        total_tiempo_corte = sum(float(item['time']) if 'time' in item else 0 for item in items)
 
         summed_data[pv] = {
             'total_kg': round(total_kg, 2),

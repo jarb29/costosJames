@@ -6,342 +6,646 @@ import plotly.express as px
 import streamlit as st
 import math
 import altair as alt
+import random
 
-
+# AWS Setup
 dynamo = boto3.resource('dynamodb', region_name='us-east-1')
+table = dynamo.Table('sam-stack-irlaa-LaserClosedTable-6CR5UN27N92Y')
+table_futuro = dynamo.Table('sam-stack-irlaa-LaserUploadTable-17V9411WFQMR0')
 
-table = dynamo.Table('LASER_CLOSE_VALUE-dev')
-table_averages = dynamo.Table('AVERAGE_VALUE-dev')
-table_futuro = dynamo.Table('LASER_UPLOAD-dev')
-
+# Initial Data Fetch
 response = table.scan()
-response_averages = table_averages.scan()
 response_futuro = table_futuro.scan()
-
 items = response['Items']
-
-items_averages = response_averages['Items']
-
 items_futuro = response_futuro['Items']
 
-months, years, cm, cy = get_months_and_years_since("01/04/2024")
+# Page Configuration
 st.set_page_config(
     page_title="Costo/Laser",
-    layout="centered",
+    layout="wide",  # Changed to wide layout
     page_icon="📉",
+    initial_sidebar_state="collapsed"
+)
 
-    initial_sidebar_state="collapsed")
-alt.themes.enable("dark")
+# Enhanced CSS
+st.markdown(
+    """
+    <style>
+    /* Modern Card Styling */
+    .metric-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
+    }
+    
+    .metric-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2C3E50;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    
+    .metric-value {
+        font-family: 'Inter', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(45deg, #2C3E50, #3498DB);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 10px 0;
+    }
+    
+    .small-value {
+        font-size: 14px;
+        color: #8B0000;  /* Dark red color */
+        margin-top: 8px;
+        font-weight: 500;
+    }
+    
+    .positive-negative {
+        font-size: 14px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 6px;
+        display: inline-block;
+        margin-top: 8px;
+    }
+        /* For positive values */
+    .positive-negative[style*="color: #22c55e"] {
+        color: #006400 !important;  /* Dark green */
+    }
+
+    /* For negative values */
+    .positive-negative[style*="color: #ef4444"] {
+        color: #8B0000 !important;  /* Dark red */
+    }
+    
+    /* Metric Type Specific Styling */
+    .bg-total-kg {
+        background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%);
+    }
+    
+    .bg-total-time {
+        background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+    }
+    
+    .bg-cost-time {
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    }
+    
+    .bg-cost-kg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .bg-deberia-kg {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+    }
+    
+    .bg-deberia-time {
+        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    }
+
+    /* Dashboard Layout */
+    .stApp {
+        background: #f8f9fa;
+    }
+    
+    /* Chart Containers */
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        margin: 20px 0;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .metric-container {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    /* Sidebar Styling */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #2C3E50 0%, #3498DB 100%);
+    }
+    
+    /* Custom Streamlit Elements */
+    .stSelectbox label {
+        color: #2C3E50 !important;
+        font-weight: 600;
+    }
+    
+    .stButton button {
+        background: linear-gradient(45deg, #2C3E50, #3498DB);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .metric-container {
+            padding: 15px;
+        }
+        .metric-value {
+            font-size: 24px;
+        }
+    }
+
+    /* Dark Mode Styles */
+    [data-theme="dark"] .stApp {
+        background-color: #1E1E1E;
+        color: #FFFFFF;
+    }
+
+    [data-theme="dark"] .metric-container {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="dark"] .small-value {
+        color: #FF0000;  /* Brighter red for dark mode to ensure visibility */
+    }
+
+    [data-theme="dark"] .small-value {
+        color: #FF0000;  /* Brighter red for dark mode to ensure visibility */
+    }
+
+    /* Interactive Card Styles */
+    .metric-container {
+        cursor: pointer;
+        overflow: hidden;
+    }
+        /* Dark mode adjustments */
+    [data-theme="dark"] .small-value {
+        color: #FF0000;  /* Brighter red for dark mode */
+    }
+
+    [data-theme="dark"] .positive-negative[style*="color: #22c55e"] {
+        color: #00FF00 !important;  /* Brighter green for dark mode */
+    }
+
+    [data-theme="dark"] .positive-negative[style*="color: #ef4444"] {
+        color: #FF0000 !important;  /* Brighter red for dark mode */
+    }
+
+    .card-details {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+
+    .card-details.active {
+        max-height: 500px;
+        padding: 15px;
+        margin-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .detail-label {
+        color: #7f8c8d;
+        font-size: 12px;
+    }
+
+    .detail-value {
+        font-weight: 600;
+    }
+
+    /* Theme Toggle Button */
+    .theme-toggle {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%);
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 10px 0;
+        width: 100%;
+    }
+
+    .theme-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
+def interactive_metric_card(label, value, details, css_class):
+    card_id = f"card_{label.lower().replace(' ', '_')}"
+    details_html = "".join([
+        f"""
+        <div class="detail-row">
+            <span class="detail-label">{k}</span>
+            <span class="detail-value">{v}</span>
+        </div>
+        """ for k, v in details.items()
+    ])
+    
+    st.markdown(f"""
+        <div class="metric-container {css_class}" id="{card_id}_container" 
+             onclick="toggleCard('{card_id}')" style="cursor: pointer;">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+            <div id="{card_id}" class="card-details">
+                {details_html}
+            </div>
+        </div>
+        <script>
+            function toggleCard(id) {{
+                const details = document.getElementById(id);
+                details.classList.toggle('active');
+            }}
+        </script>
+    """, unsafe_allow_html=True)
+
+
+# Helper Functions
+def colored_metric(label: str, value: str, css_class: str, small_value: str = None, difference: float = None):
+    animation_delay = random.uniform(0.1, 0.5)
+    
+    difference_html = ""
+    if difference is not None:
+        difference_str = "+" + str(round_to_two_decimals2(difference)) if float(difference) > 0 else "-" + str(round_to_two_decimals2(abs(difference)))
+        difference_color = "#8B0000"  # Always dark red, regardless of positive or negative
+        difference_html = f'<div class="positive-negative" style="color: {difference_color}">{difference_str}</div>'
+    
+    st.markdown(f"""
+        <div class="metric-container {css_class}" style="animation-delay: {animation_delay}s">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+            {f'<div class="small-value">{small_value}</div>' if small_value else ''}
+            {difference_html}
+        </div>
+    """, unsafe_allow_html=True)
+
+
+def create_enhanced_chart(fig):
+    fig.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(t=50, l=50, r=30, b=50),
+        font_family="Inter",
+        title_font_family="Inter",
+        title_font_size=24,
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=16,
+            font_family="Inter"
+        ),
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01,
+            bgcolor='rgba(255,255,255,0.8)'
+        )
+    )
+    return fig
+
+# Sidebar Configuration
 with st.sidebar:
     st.sidebar.image("data/logo.png", use_container_width=True)
-    st.title("📅 Nave1/Laser Costos")
+    st.markdown("""
+        <div style='background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); 
+                    padding: 15px; 
+                    border-radius: 10px; 
+                    margin-bottom: 20px'>
+            <h2 style='color: white; margin: 0;'>📅 Nave1/Laser Costos</h2>
+        </div>
+    """, unsafe_allow_html=True)
 
-    if cm == 1:  # Assuming '1' corresponds to 'January'
-        default_month_index = months.index(cm)  # Leave as is
+    # Get months and years
+    months, years, cm, cy = get_months_and_years_since("01/04/2024")
+    
+    # Calculate default indices
+    if cm == 1:
+        default_month_index = months.index(cm)
     else:
-        default_month_index = months.index(cm) - 1  # Apply the formula
-
+        default_month_index = months.index(cm) - 1
+    
     default_years_index = years.index(cy)
-    selected_month = st.sidebar.selectbox('Seleccione Mes', months, index=default_month_index)
-    selected_year = st.sidebar.selectbox('Seleccione Año', years, index=default_years_index)
-    precio_mes = st.sidebar.number_input('Valor para Costo/Mes', value=10000000)
-    st.markdown("---")
-#######################
-# Dashboard Main Panel
-col = st.columns((2, 4, 4), gap='medium')
 
-precio_kg = st.sidebar.number_input('Valor para Costo por Kg', value=360)
-precio_efectivo_minutos = st.sidebar.number_input('Valor para Costo Hora/Corte', value=210000)
+    # Enhanced selectboxes
+    col1, col2 = st.columns(2)
+    with col1:
+        selected_month = st.selectbox('Mes', months, index=default_month_index)
+    with col2:
+        selected_year = st.selectbox('Año', years, index=default_years_index)
+
+    # Cost inputs with enhanced styling
+    st.markdown("""
+        <div style='background: rgba(255,255,255,0.1); 
+                    padding: 15px; 
+                    border-radius: 10px; 
+                    margin: 20px 0;'>
+            <h3 style='color: black; font-size: 16px;'>Configuración de Costos</h3>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    precio_mes = st.number_input('Valor para Costo/Mes', value=10000000)
+    precio_kg = st.number_input('Valor para Costo por Kg', value=360)
+    precio_efectivo_minutos = st.number_input('Valor para Costo Hora/Corte', value=210000)
+
+# Add this after your existing sidebar content
+# with st.sidebar:
+#     st.markdown("### 🎨 Theme Settings")
+#     theme = st.selectbox('Choose Theme', ['Light', 'Dark'], key='theme_select')
+    
+#     if theme == 'Dark':
+#         st.markdown("""
+#             <script>
+#                 document.body.setAttribute('data-theme', 'dark');
+#             </script>
+#         """, unsafe_allow_html=True)
+#     else:
+#         st.markdown("""
+#             <script>
+#                 document.body.setAttribute('data-theme', 'light');
+#             </script>
+#         """, unsafe_allow_html=True)
 
 
+# Data Processing
 while 'LastEvaluatedKey' in response_futuro:
     response_futuro = table_futuro.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
     items_futuro.extend(response_futuro['Items'])
-
-
-averages_ss = average_dict_values(items_averages[0]['details'])
-df_average = pd.DataFrame(list(averages_ss.items()), columns=['espesor', 'velocidad'])
-df_average['espesor'] = df_average['espesor'].astype(int)
-df_average = df_average.sort_values(by='espesor', ascending=True)
-df_average['espesor'] = 'e: ' + df_average['espesor'].astype(str)
-
 
 while 'LastEvaluatedKey' in response:
     response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
     items.extend(response['Items'])
 
-items = filter_by_close_month_year(items,selected_month, selected_year)
-
-new_data = calculate_tiempo_corte(items, averages_ss)
-new_data_futuro = calculate_tiempo_corte(items_futuro, averages_ss)
-
-
-
+# Filter and process data
+items = filter_by_close_month_year(items, selected_month, selected_year)
 items.sort(key=itemgetter('pv'))
-grouped_data = {}
-for key, group in groupby(items, key=lambda x:x['pv']):
-    grouped_data[key] = list(group)
-
+grouped_data = {key: list(group) for key, group in groupby(items, key=lambda x: x['pv'])}
 
 items_futuro.sort(key=itemgetter('pv'))
-
-grouped_data_futuro = {}
-for key, group in groupby(items_futuro, key=lambda x:x['pv']):
-    grouped_data_futuro[key] = list(group)
-
+grouped_data_futuro = {key: list(group) for key, group in groupby(items_futuro, key=lambda x: x['pv'])}
 
 newest_dates = process_grouped_data(grouped_data)
-filtered_pvs = filter_by_year_month(newest_dates,selected_year, selected_month)
-
-
+filtered_pvs = filter_by_year_month(newest_dates, selected_year, selected_month)
 grouped_data2 = {each: grouped_data[each] for each in filtered_pvs}
 
+# Calculate summaries
 summed_data = sum_up_values(grouped_data2)
 summed_data_futuro = sum_up_values(grouped_data_futuro)
 
 costos_data = calculate_total_price(summed_data, precio_kg, precio_efectivo_minutos/60)
 costos_data_futuro = calculate_total_price(summed_data_futuro, precio_kg, precio_efectivo_minutos/60)
 
+# Convert to DataFrame
 df = convert_dict_to_df(costos_data)
 
+
+# Calculate main metrics
 kg_mes = sum(df['total_kg'])
 tiempo_mes = sum(df['total_tiempo_corte'])/60
 costo_kg = sum(df['precio_kg'])
 costo_tiempo = sum(df['precio_tiempo'])
 
-deberia_kg = precio_mes/kg_mes
-deberia_tiempo = precio_mes/tiempo_mes
+deberia_kg = precio_mes/kg_mes if kg_mes > 0 else 0
+deberia_tiempo = precio_mes/tiempo_mes if tiempo_mes > 0 else 0
 tonFaltantes = max(0, precio_mes/precio_kg - kg_mes)
 laserFaltantes = max(0, precio_mes/precio_efectivo_minutos-tiempo_mes)
 
+# Main Dashboard Layout
+st.markdown("""
+    <div style='padding: 1.5rem 0 0.5rem'>
+        <h1 style='color: #2C3E50; font-size: 2rem; font-weight: 700; margin-bottom: 1rem;'>
+            Dashboard Overview
+        </h1>
+        <p style='color: #7f8c8d; font-size: 1.1rem; margin-bottom: 2rem;'>
+            Análisis de costos y métricas de producción
+        </p>
+    </div>
+""", unsafe_allow_html=True)
 
-# Custom CSS for colored metrics
-st.markdown(
-    """
-    <style>
-    .metric-container {
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        color: white;
-    }
-    .metric-label {
-        font-size: 16px;
-        font-weight: bold;
-    }
-    .metric-value {
-        font-size: 24px;
-        text-align: center;
-    }
-    .bg-total-kg {background-color: #4CAF50;}
-    .bg-total-time {background-color: #2196F3;}
-    .bg-cost-time {background-color: #FF9800;}
-    .bg-cost-kg {background-color: #9C27B0;}
-    .bg-deberia-kg {background-color: #F44336;}
-    .bg-deberia-time {background-color: #3F51B5;}
+# First Row - Key Metrics
+st.markdown("<div style='margin-bottom: 2rem;'>", unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
 
-    /* Style for the smaller, differently colored value */
-    .small-value {
-        font-size: 14px; 
-        color: #111; 
-        margin-top: 5px;
-        font-weight: bold;
-    }
-    .posive-negative {
-        font-size: 14px; 
-        color: #111; 
-        margin-top: 5px;
-        font-weight: bold;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Replace your existing metric displays with these
+with col1:
+    interactive_metric_card(
+        "Total KG Procesados",
+        f"{round_to_two_decimals(kg_mes/1000)} Ton",
+        {
+            "Objetivo": f"{round_to_two_decimals((kg_mes + tonFaltantes)/1000)} Ton",
+            "Diferencia": f"{round_to_two_decimals(tonFaltantes/1000)} Ton",
+            "Eficiencia": f"{round_to_two_decimals((kg_mes/(kg_mes + tonFaltantes))*100)}%",
+            "Total Piezas": f"{len(items):,}"
+        },
+        "bg-total-kg"
+    )
 
-# Helper function to add a colored metric
-def colored_metric(label: str, value: str, css_class: str, small_value: str = None,  diffenrence: float = None):
-    if diffenrence is not None:
-        diffenrence_str = "+" + str(round_to_two_decimals2(diffenrence)) if float(diffenrence) > 0 else "-" + str(round_to_two_decimals2(abs(diffenrence)))
-    else:
-        diffenrence_str = None
-    st.markdown(f"""
-        <div class="metric-container {css_class}">
-            <div class="metric-label">{label}</div>
-            <div class="metric-value">{value}</div>
-            {f'<div class="small-value">{small_value}</div>' if small_value else ''}
-            {f'<div class="posive-negative">{diffenrence_str}</div>' if diffenrence_str else ''}
-        </div>
-    """, unsafe_allow_html=True)
+with col2:
+    interactive_metric_card(
+        "Tiempo Total de Corte",
+        f"{round_to_two_decimals(tiempo_mes)} hrs",
+        {
+            "Objetivo": f"{round_to_two_decimals(tiempo_mes + laserFaltantes)} hrs",
+            "Diferencia": f"{round_to_two_decimals(laserFaltantes)} hrs",
+            "Eficiencia": f"{round_to_two_decimals((tiempo_mes/(tiempo_mes + laserFaltantes))*100)}%",
+            "Promedio/Pieza": f"{round_to_two_decimals(tiempo_mes/len(items) if len(items) > 0 else 0)} hrs"
+        },
+        "bg-total-time"
+    )
+
+with col3:
+    interactive_metric_card(
+        "Costo por KG",
+        f"${round_to_two_decimals2(costo_kg)}",
+        {
+            "Meta": f"${precio_kg}",
+            "Diferencia": f"${round_to_two_decimals2(costo_kg - precio_mes)}",
+            "Costo Total": f"${round_to_two_decimals2(costo_kg * kg_mes)}",
+            "Costo/Ton": f"${round_to_two_decimals2(costo_kg * 1000)}"
+        },
+        "bg-cost-kg"
+    )
 
 
-# Vertical header and metrics
-st.markdown("### Métricas del Mes")
+st.markdown("</div>", unsafe_allow_html=True)
 
-# Define columns layout for Monthly Metrics
-metric_cols1 = st.columns(3)
-with metric_cols1[0]:
-    colored_metric("Total KG", f"{round_to_two_decimals(kg_mes/1000)} Ton", "bg-total-kg",
-                   small_value=f"Ton Faltantes: {round_to_two_decimals(tonFaltantes/1000)} Ton")
-with metric_cols1[1]:
-    colored_metric("Total Tiempo", f"{round_to_two_decimals(tiempo_mes)} hours", "bg-total-time",
-                   small_value=f"LaserOn Faltante: {round_to_two_decimals(laserFaltantes)} Hr")
-with metric_cols1[2]:
-    colored_metric("Cobro por KG", f"${round_to_two_decimals2(costo_kg)}", "bg-cost-kg", small_value=f"a ${precio_kg}",
-                   diffenrence=costo_kg - precio_mes)
+# Second Row - Additional Metrics
+st.markdown("<div style='margin-bottom: 2rem;'>", unsafe_allow_html=True)
+col4, col5, col6 = st.columns(3)
 
-# Vertical separator
-st.markdown("---")
+with col4:
+    colored_metric(
+        "Costo por Tiempo",
+        f"${round_to_two_decimals2(costo_tiempo)}",
+        "bg-cost-time",
+        small_value=f"Meta: ${round_to_two_decimals2(precio_efectivo_minutos)}",
+        difference=costo_tiempo - precio_mes
+    )
 
-# Vertical header and metrics
-st.markdown("### Precios Ideales")
+with col5:
+    colored_metric(
+        "Precio Ideal por KG",
+        f"${round_to_two_decimals(deberia_kg)}",
+        "bg-deberia-kg",
+        small_value=f"Actual: ${round_to_two_decimals2(precio_kg)}",
+        difference=precio_kg - deberia_kg
+    )
 
-# Define columns layout for Current Prices
-metric_cols2 = st.columns(3)
-with metric_cols2[0]:
-    colored_metric("Cobro por Tiempo", f"${round_to_two_decimals2(costo_tiempo)}", "bg-cost-time", small_value=f"a ${round_to_two_decimals2(precio_efectivo_minutos)}",
-                   diffenrence=costo_tiempo - precio_mes)
-with metric_cols2[1]:
-    colored_metric("Ideal por KG", f"${round_to_two_decimals(deberia_kg)}", "bg-deberia-kg",
-                   small_value=f"a ${round_to_two_decimals2(precio_mes)}", diffenrence=precio_kg - deberia_kg)
-with metric_cols2[2]:
-    colored_metric("Ideal por Tiempo", f"${round_to_two_decimals2(deberia_tiempo)}", "bg-deberia-time",
-                   small_value=f"a ${round_to_two_decimals2(precio_mes)}", diffenrence=precio_efectivo_minutos - deberia_tiempo)
+with col6:
+    colored_metric(
+        "Precio Ideal por Hora",
+        f"${round_to_two_decimals2(deberia_tiempo)}",
+        "bg-deberia-time",
+        small_value=f"Actual: ${round_to_two_decimals2(precio_efectivo_minutos)}",
+        difference=precio_efectivo_minutos - deberia_tiempo
+    )
 
-# Vertical separator
-st.markdown("---")
+st.markdown("</div>", unsafe_allow_html=True)
 
+# Charts Section
+st.markdown("""
+    <div style='margin: 2rem 0 1rem'>
+        <h2 style='color: #2C3E50; font-size: 1.5rem; font-weight: 600;'>
+            Análisis Detallado
+        </h2>
+    </div>
+""", unsafe_allow_html=True)
 
-
-# Calculate sum of 'total_kg'
-kg_mes = sum(df['total_kg'])
-df_futuro = convert_dict_to_df(costos_data_futuro)
-df_futuro_len = len(df_futuro)
-
-# Modify 'pv' and 'total_kg' columns
+# Process data for charts
 df['pv'] = 'PV ' + df['pv']
 df['total_kg'] = round(df['total_kg'] / 1000, 2)
-if df_futuro_len > 0:
-    df_futuro['pv'] = 'PV ' + df_futuro['pv']
-    df_futuro['total_kg'] = round(df_futuro['total_kg'] / 1000, 2)
 
-# Sidebar Sorting Buttons
-col1, col2 = st.sidebar.columns(2)
-
-kg_sort = col1.button('Ordenar Por Costo/Kg')
-if kg_sort:
-    df = df.sort_values(by='precio_kg', ascending=False)
-    if df_futuro_len > 0:
-        df_futuro = df_futuro.sort_values(by='precio_kg', ascending=False)
-
-tiempo_sort = col2.button('Ordenar Costo/Tiempo')
-if tiempo_sort:
-    df = df.sort_values(by='precio_tiempo', ascending=False)
-    if df_futuro_len > 0:
-        df_futuro = df_futuro.sort_values(by='precio_tiempo', ascending=False)
-
-# Rename columns for better readability
-df = df.rename(columns={'precio_kg': 'Costo Kg', 'precio_tiempo': 'Costo Tiempo'})
-
-# Plot chunks of the DataFrame
-total_plots = math.ceil(len(df) / 30)
-for i in range(total_plots):
-    df_chunk = df[i * 30: (i + 1) * 30]
-    custom_data = df_chunk.values.T.tolist()
-
-    fig = px.bar(
-        df_chunk, x='pv', y=['Costo Kg', 'Costo Tiempo'],
-        title='Costo KG and Costo Tiempo for each PV: PASADO',
-        labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
-        height=800, custom_data=custom_data
-    )  # Increased plot height
-
-    # Adjust x-axis labels and set barmode as 'group'
-    fig.update_layout(
-        title={
-            'text': "Pv Procesadas<br><sub>Costo KG y Costo Tiempo por cada PV<sub>",
-            'y': 0.9,
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top',
-            'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'},
-        },
-        autosize=True,  # This line disables the autoresize
-        xaxis_tickangle=-45,
-        barmode='group',
-        xaxis=dict(
-            tickfont=dict(size=14),  # Increase font size for x-axis values
-            title_font=dict(size=14)  # Increase font size for x-axis label
-        ),
-        yaxis=dict(
-            tickfont=dict(size=14),  # Increase font size for y-axis values
-            title_font=dict(size=14)  # Increase font size for y-axis label
-        ),
-    )
-
-    fig.update_traces(hovertemplate='%{x}<br>'
-                                    'Kg = %{customdata[1]} Ton<br>'
-                                    'Tiempo Corte = %{customdata[2]} min<br>'
-                                    'Costo Kg = %{customdata[3]:,.0f} Pesos<br>'
-                                    'Costo Tiempo = %{customdata[4]:,.0f} Pesos')
-    st.plotly_chart(fig)
-
-
-
-st.markdown("---")
-if len(df_futuro) > 0:
-    custom_data_futuro = df_futuro.values.T.tolist()
-    df_futuro = df_futuro.rename(columns={'precio_kg': 'Costo Kg', 'precio_tiempo': 'Costo Tiempo'})
-
-    fig_futuro = px.bar(
-        df_futuro, x='pv', y=['Costo Kg', 'Costo Tiempo'],
-        title='Costo KG y Costo Tiempo por cada PV: FUTURO',
-        labels={'value': 'Costo', 'variable': 'Tipo', 'pv': 'PV'},
-        height=800, custom_data=custom_data_futuro
-    )  # Increased plot height
-
-    # Adjust x-axis labels and set barmode as 'group'
-    fig_futuro.update_layout(
-        title={
-            'text': "Pv en Proceso<br><sub>Costo KG y Costo Tiempo por cada PV<sub>",
-            'y': 0.9,
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top',
-            'font': {'size': 20, 'color': 'black', 'family': 'Arial, bold'}
-        },
-        autosize=True,  # This line disables the autoresize
-        xaxis_tickangle=-90,
-        barmode='group',
-        xaxis=dict(
-            tickfont=dict(size=14),  # Increase font size for x-axis values
-            title_font=dict(size=14)  # Increase font size for x-axis label
-        ),
-        yaxis=dict(
-            tickfont=dict(size=14),  # Increase font size for y-axis values
-            title_font=dict(size=14)  # Increase font size for y-axis label
-        ),
-    )
-
-    fig_futuro.update_traces(hovertemplate='%{x}<br>'
-                                           'Kg = %{customdata[1]} Ton<br>'
-                                           'Tiempo Corte = %{customdata[2]} min<br>'
-                                           'Costo KG = %{customdata[3]:,.0f} Pesos<br>'
-                                           'Costo Tiempo = %{customdata[4]:,.0f} Pesos')
-    st.plotly_chart(fig_futuro)
-    st.markdown("---")
-
-# Plotting Averages Data
-fig_averages = px.bar(
-    df_average, x='espesor', y='velocidad',
-    color_discrete_sequence=px.colors.qualitative.Plotly,  # let's add this
-    title='Espesor Vs Velocidad'
-)  # Increased plot height
-
-# Adjust x-axis labels and set barmode as 'group'
-fig_averages.update_layout(
-    autosize=True,
+# Create enhanced charts for historical data
+# Create enhanced charts for historical data
+st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+fig = px.bar(
+    df,
+    x='pv',
+    y=['precio_kg', 'precio_tiempo'],
+    title='Análisis de Costos por PV',
+    labels={
+        'value': 'Costo', 
+        'variable': 'Tipo', 
+        'pv': 'PV',
+        'precio_kg': 'Costo por KG',
+        'precio_tiempo': 'Costo por Tiempo'
+    },
+    height=600
 )
 
-st.plotly_chart(fig_averages)
+# Enhanced hover template
+fig.update_traces(
+    hovertemplate="<b>%{x}</b><br>" +
+                  "Valor: $%{y:,.2f}<br>" +
+                  "<extra></extra>",  # This removes the secondary box
+)
+
+fig = create_enhanced_chart(fig)
+fig.update_layout(
+    title={
+        'text': "Análisis de Costos Históricos<br><sub>Comparación de costos por KG y Tiempo</sub>",
+        'y': 0.95,
+        'x': 0.5,
+        'xanchor': 'center',
+        'yanchor': 'top',
+        'font': {'size': 20, 'color': '#2C3E50', 'family': 'Inter, bold'}
+    },
+    hoverlabel=dict(
+        bgcolor="white",
+        font_size=14,
+        font_family="Inter",
+        bordercolor="#2C3E50",
+        namelength=-1  # Show full variable names
+    )
+)
+
+st.plotly_chart(fig, use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Do the same for the future data chart
+if len(df_futuro := convert_dict_to_df(costos_data_futuro)) > 0:
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    df_futuro['pv'] = 'PV ' + df_futuro['pv']
+    df_futuro['total_kg'] = round(df_futuro['total_kg'] / 1000, 2)
+    
+    fig_futuro = px.bar(
+        df_futuro,
+        x='pv',
+        y=['precio_kg', 'precio_tiempo'],
+        title='Proyección de Costos Futuros',
+        labels={
+            'value': 'Costo', 
+            'variable': 'Tipo', 
+            'pv': 'PV',
+            'precio_kg': 'Costo por KG',
+            'precio_tiempo': 'Costo por Tiempo'
+        },
+        height=600
+    )
+    
+    # Enhanced hover template for future data
+    fig_futuro.update_traces(
+        hovertemplate="<b>%{x}</b><br>" +
+                     "Valor: $%{y:,.2f}<br>" +
+                     "<extra></extra>",
+    )
+    
+    fig_futuro = create_enhanced_chart(fig_futuro)
+    fig_futuro.update_layout(
+        title={
+            'text': "Proyección de Costos Futuros<br><sub>Análisis de PVs en proceso</sub>",
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 20, 'color': '#2C3E50', 'family': 'Inter, bold'}
+        },
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=14,
+            font_family="Inter",
+            bordercolor="#2C3E50",
+            namelength=-1
+        )
+    )
+    
+    st.plotly_chart(fig_futuro, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
