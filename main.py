@@ -707,7 +707,7 @@ else:
     # Process data for charts
     df['pv'] = 'PV ' + df['pv']
     df['total_kg'] = round(df['total_kg'] / 1000, 2)
-
+    df = df.sort_values('total_kg', ascending=False)
     # Create enhanced charts for historical data
     # Create enhanced charts for historical data
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
@@ -760,7 +760,7 @@ else:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         df_futuro['pv'] = 'PV ' + df_futuro['pv']
         df_futuro['total_kg'] = round(df_futuro['total_kg'] / 1000, 2)
-
+        df_futuro = df_futuro.sort_values('total_kg', ascending=False)
         fig_futuro = px.bar(
             df_futuro,
             x='pv',
