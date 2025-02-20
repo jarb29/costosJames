@@ -491,201 +491,231 @@ while 'LastEvaluatedKey' in response:
 
 # Filter and process data
 items = filter_by_close_month_year(items, selected_month, selected_year)
-items.sort(key=itemgetter('pv'))
-grouped_data = {key: list(group) for key, group in groupby(items, key=lambda x: x['pv'])}
-
-items_futuro.sort(key=itemgetter('pv'))
-grouped_data_futuro = {key: list(group) for key, group in groupby(items_futuro, key=lambda x: x['pv'])}
-
-newest_dates = process_grouped_data(grouped_data)
-filtered_pvs = filter_by_year_month(newest_dates, selected_year, selected_month)
-grouped_data2 = {each: grouped_data[each] for each in filtered_pvs}
-
-# Calculate summaries
-summed_data = sum_up_values(grouped_data2)
-summed_data_futuro = sum_up_values(grouped_data_futuro)
-
-costos_data = calculate_total_price(summed_data, precio_kg, precio_efectivo_minutos/60)
-costos_data_futuro = calculate_total_price(summed_data_futuro, precio_kg, precio_efectivo_minutos/60)
-
-# Convert to DataFrame
-df = convert_dict_to_df(costos_data)
-
-
-# Calculate main metrics
-kg_mes = sum(df['total_kg'])
-tiempo_mes = sum(df['total_tiempo_corte'])/60
-costo_kg = sum(df['precio_kg'])
-costo_tiempo = sum(df['precio_tiempo'])
-
-deberia_kg = precio_mes/kg_mes if kg_mes > 0 else 0
-deberia_tiempo = precio_mes/tiempo_mes if tiempo_mes > 0 else 0
-tonFaltantes = max(0, precio_mes/precio_kg - kg_mes)
-laserFaltantes = max(0, precio_mes/precio_efectivo_minutos-tiempo_mes)
-
-# Main Dashboard Layout
-st.markdown("""
-    <div style='padding: 1.5rem 0 0.5rem'>
-        <h1 style='color: #2C3E50; font-size: 2rem; font-weight: 700; margin-bottom: 1rem;'>
-            Dashboard Overview
-        </h1>
-        <p style='color: #7f8c8d; font-size: 1.1rem; margin-bottom: 2rem;'>
-            Análisis de costos y métricas de producción
-        </p>
-    </div>
-""", unsafe_allow_html=True)
-
-# First Row - Key Metrics
-st.markdown("<div style='margin-bottom: 2rem;'>", unsafe_allow_html=True)
-col1, col2, col3 = st.columns(3)
-
-# Replace your existing metric displays with these
-with col1:
-    interactive_metric_card(
-        "Total KG Procesados",
-        f"{round_to_two_decimals(kg_mes/1000)} Ton",
-        {
-            "Objetivo": f"{round_to_two_decimals((kg_mes + tonFaltantes)/1000)} Ton",
-            "Diferencia": f"{round_to_two_decimals(tonFaltantes/1000)} Ton",
-            "Eficiencia": f"{round_to_two_decimals((kg_mes/(kg_mes + tonFaltantes))*100)}%",
-            "Total Piezas": f"{len(items):,}"
-        },
-        "bg-total-kg"
-    )
-
-with col2:
-    interactive_metric_card(
-        "Tiempo Total de Corte",
-        f"{round_to_two_decimals(tiempo_mes)} hrs",
-        {
-            "Objetivo": f"{round_to_two_decimals(tiempo_mes + laserFaltantes)} hrs",
-            "Diferencia": f"{round_to_two_decimals(laserFaltantes)} hrs",
-            "Eficiencia": f"{round_to_two_decimals((tiempo_mes/(tiempo_mes + laserFaltantes))*100)}%",
-            "Promedio/Pieza": f"{round_to_two_decimals(tiempo_mes/len(items) if len(items) > 0 else 0)} hrs"
-        },
-        "bg-total-time"
-    )
-
-with col3:
-    interactive_metric_card(
-        "Costo por KG",
-        f"${round_to_two_decimals2(costo_kg)}",
-        {
-            "Meta": f"${precio_kg}",
-            "Diferencia": f"${round_to_two_decimals2(costo_kg - precio_mes)}",
-            "Costo Total": f"${round_to_two_decimals2(costo_kg * kg_mes)}",
-            "Costo/Ton": f"${round_to_two_decimals2(costo_kg * 1000)}"
-        },
-        "bg-cost-kg"
-    )
+if not items:
+    # Create a centered warning card with custom styling
+    st.markdown("""
+        <div class='warning-container'>
+            <div class='warning-card'>
+                <div class='warning-icon'>
+                    ⚠️
+                </div>
+                <h2 class='warning-title'>
+                    No hay datos en el periodo seleccionado
+                </h2>
+                <p class='warning-text'>
+                    Por favor seleccione un periodo diferente
+                </p>
+            </div>
+        </div>
+        <style>
+            .warning-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 85vh;
+            }
+            
+            .warning-card {
+                background: linear-gradient(145deg, #FFF3CD, #FFF9E6);
+                border: 2px solid #FFEEBA;
+                border-radius: 20px;
+                padding: 3rem;
+                text-align: center;
+                max-width: 800px;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+                animation: warningFadeIn 0.8s ease-in-out;
+                transform: scale(1);
+                transition: transform 0.3s ease;
+            }
+            
+            .warning-card:hover {
+                transform: scale(1.02);
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            }
+            
+            .warning-icon {
+                font-size: 8rem;
+                color: #856404;
+                margin-bottom: 2rem;
+                animation: warningBounce 2s infinite;
+            }
+            
+            .warning-title {
+                color: #856404;
+                font-size: 2.5rem;
+                margin-bottom: 1.5rem;
+                font-weight: 600;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            }
+            
+            .warning-text {
+                color: #856404;
+                font-size: 1.5rem;
+                line-height: 1.6;
+                opacity: 0.9;
+            }
+            
+            @keyframes warningFadeIn {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            @keyframes warningBounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-20px); }
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
 
-st.markdown("</div>", unsafe_allow_html=True)
+else:
 
-# Second Row - Additional Metrics
-st.markdown("<div style='margin-bottom: 2rem;'>", unsafe_allow_html=True)
-col4, col5, col6 = st.columns(3)
 
-with col4:
-    colored_metric(
-        "Costo por Tiempo",
-        f"${round_to_two_decimals2(costo_tiempo)}",
-        "bg-cost-time",
-        small_value=f"Meta: ${round_to_two_decimals2(precio_efectivo_minutos)}",
-        difference=costo_tiempo - precio_mes
-    )
+    items.sort(key=itemgetter('pv'))
+    grouped_data = {key: list(group) for key, group in groupby(items, key=lambda x: x['pv'])}
 
-with col5:
-    colored_metric(
-        "Precio Ideal por KG",
-        f"${round_to_two_decimals(deberia_kg)}",
-        "bg-deberia-kg",
-        small_value=f"Actual: ${round_to_two_decimals2(precio_kg)}",
-        difference=precio_kg - deberia_kg
-    )
+    items_futuro.sort(key=itemgetter('pv'))
+    grouped_data_futuro = {key: list(group) for key, group in groupby(items_futuro, key=lambda x: x['pv'])}
 
-with col6:
-    colored_metric(
-        "Precio Ideal por Hora",
-        f"${round_to_two_decimals2(deberia_tiempo)}",
-        "bg-deberia-time",
-        small_value=f"Actual: ${round_to_two_decimals2(precio_efectivo_minutos)}",
-        difference=precio_efectivo_minutos - deberia_tiempo
-    )
+    newest_dates = process_grouped_data(grouped_data)
+    filtered_pvs = filter_by_year_month(newest_dates, selected_year, selected_month)
+    grouped_data2 = {each: grouped_data[each] for each in filtered_pvs}
 
-st.markdown("</div>", unsafe_allow_html=True)
+    # Calculate summaries
+    summed_data = sum_up_values(grouped_data2)
+    summed_data_futuro = sum_up_values(grouped_data_futuro)
 
-# Charts Section
-st.markdown("""
-    <div style='margin: 2rem 0 1rem'>
-        <h2 style='color: #2C3E50; font-size: 1.5rem; font-weight: 600;'>
-            Análisis Detallado
-        </h2>
-    </div>
-""", unsafe_allow_html=True)
+    costos_data = calculate_total_price(summed_data, precio_kg, precio_efectivo_minutos/60)
+    costos_data_futuro = calculate_total_price(summed_data_futuro, precio_kg, precio_efectivo_minutos/60)
 
-# Process data for charts
-df['pv'] = 'PV ' + df['pv']
-df['total_kg'] = round(df['total_kg'] / 1000, 2)
+    # Convert to DataFrame
+    df = convert_dict_to_df(costos_data)
 
-# Create enhanced charts for historical data
-# Create enhanced charts for historical data
-st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-fig = px.bar(
-    df,
-    x='pv',
-    y=['precio_kg', 'precio_tiempo'],
-    title='Análisis de Costos por PV',
-    labels={
-        'value': 'Costo',
-        'variable': 'Tipo',
-        'pv': 'PV',
-        'precio_kg': 'Costo por KG',
-        'precio_tiempo': 'Costo por Tiempo'
-    },
-    height=600
-)
 
-# Enhanced hover template
-fig.update_traces(
-    hovertemplate="<b>%{x}</b><br>" +
-                  "Valor: $%{y:,.2f}<br>" +
-                  "<extra></extra>",  # This removes the secondary box
-)
+    # Calculate main metrics
+    kg_mes = sum(df['total_kg'])
+    tiempo_mes = sum(df['total_tiempo_corte'])/60
+    costo_kg = sum(df['precio_kg'])
+    costo_tiempo = sum(df['precio_tiempo'])
 
-fig = create_enhanced_chart(fig)
-fig.update_layout(
-    title={
-        'text': "Análisis de Costos Históricos<br><sub>Comparación de costos por KG y Tiempo</sub>",
-        'y': 0.95,
-        'x': 0.5,
-        'xanchor': 'center',
-        'yanchor': 'top',
-        'font': {'size': 20, 'color': '#2C3E50', 'family': 'Inter, bold'}
-    },
-    hoverlabel=dict(
-        bgcolor="white",
-        font_size=14,
-        font_family="Inter",
-        bordercolor="#2C3E50",
-        namelength=-1  # Show full variable names
-    )
-)
+    deberia_kg = precio_mes/kg_mes if kg_mes > 0 else 0
+    deberia_tiempo = precio_mes/tiempo_mes if tiempo_mes > 0 else 0
+    tonFaltantes = max(0, precio_mes/precio_kg - kg_mes)
+    laserFaltantes = max(0, precio_mes/precio_efectivo_minutos-tiempo_mes)
 
-st.plotly_chart(fig, use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
+    # Main Dashboard Layout
+    st.markdown("""
+        <div style='padding: 1.5rem 0 0.5rem'>
+            <h1 style='color: #2C3E50; font-size: 2rem; font-weight: 700; margin-bottom: 1rem;'>
+                Dashboard Overview
+            </h1>
+            <p style='color: #7f8c8d; font-size: 1.1rem; margin-bottom: 2rem;'>
+                Análisis de costos y métricas de producción
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
-# Do the same for the future data chart
-if len(df_futuro := convert_dict_to_df(costos_data_futuro)) > 0:
+    # First Row - Key Metrics
+    st.markdown("<div style='margin-bottom: 2rem;'>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+
+    # Replace your existing metric displays with these
+    with col1:
+        interactive_metric_card(
+            "Total KG Procesados",
+            f"{round_to_two_decimals(kg_mes/1000)} Ton",
+            {
+                "Objetivo": f"{round_to_two_decimals((kg_mes + tonFaltantes)/1000)} Ton",
+                "Diferencia": f"{round_to_two_decimals(tonFaltantes/1000)} Ton",
+                "Eficiencia": f"{round_to_two_decimals((kg_mes/(kg_mes + tonFaltantes))*100)}%",
+                "Total Piezas": f"{len(items):,}"
+            },
+            "bg-total-kg"
+        )
+
+    with col2:
+        interactive_metric_card(
+            "Tiempo Total de Corte",
+            f"{round_to_two_decimals(tiempo_mes)} hrs",
+            {
+                "Objetivo": f"{round_to_two_decimals(tiempo_mes + laserFaltantes)} hrs",
+                "Diferencia": f"{round_to_two_decimals(laserFaltantes)} hrs",
+                "Eficiencia": f"{round_to_two_decimals((tiempo_mes/(tiempo_mes + laserFaltantes))*100)}%",
+                "Promedio/Pieza": f"{round_to_two_decimals(tiempo_mes/len(items) if len(items) > 0 else 0)} hrs"
+            },
+            "bg-total-time"
+        )
+
+    with col3:
+        interactive_metric_card(
+            "Costo por KG",
+            f"${round_to_two_decimals2(costo_kg)}",
+            {
+                "Meta": f"${precio_kg}",
+                "Diferencia": f"${round_to_two_decimals2(costo_kg - precio_mes)}",
+                "Costo Total": f"${round_to_two_decimals2(costo_kg * kg_mes)}",
+                "Costo/Ton": f"${round_to_two_decimals2(costo_kg * 1000)}"
+            },
+            "bg-cost-kg"
+        )
+
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Second Row - Additional Metrics
+    st.markdown("<div style='margin-bottom: 2rem;'>", unsafe_allow_html=True)
+    col4, col5, col6 = st.columns(3)
+
+    with col4:
+        colored_metric(
+            "Costo por Tiempo",
+            f"${round_to_two_decimals2(costo_tiempo)}",
+            "bg-cost-time",
+            small_value=f"Meta: ${round_to_two_decimals2(precio_efectivo_minutos)}",
+            difference=costo_tiempo - precio_mes
+        )
+
+    with col5:
+        colored_metric(
+            "Precio Ideal por KG",
+            f"${round_to_two_decimals(deberia_kg)}",
+            "bg-deberia-kg",
+            small_value=f"Actual: ${round_to_two_decimals2(precio_kg)}",
+            difference=precio_kg - deberia_kg
+        )
+
+    with col6:
+        colored_metric(
+            "Precio Ideal por Hora",
+            f"${round_to_two_decimals2(deberia_tiempo)}",
+            "bg-deberia-time",
+            small_value=f"Actual: ${round_to_two_decimals2(precio_efectivo_minutos)}",
+            difference=precio_efectivo_minutos - deberia_tiempo
+        )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Charts Section
+    st.markdown("""
+        <div style='margin: 2rem 0 1rem'>
+            <h2 style='color: #2C3E50; font-size: 1.5rem; font-weight: 600;'>
+                Análisis Detallado
+            </h2>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Process data for charts
+    df['pv'] = 'PV ' + df['pv']
+    df['total_kg'] = round(df['total_kg'] / 1000, 2)
+
+    # Create enhanced charts for historical data
+    # Create enhanced charts for historical data
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-    df_futuro['pv'] = 'PV ' + df_futuro['pv']
-    df_futuro['total_kg'] = round(df_futuro['total_kg'] / 1000, 2)
-
-    fig_futuro = px.bar(
-        df_futuro,
+    fig = px.bar(
+        df,
         x='pv',
         y=['precio_kg', 'precio_tiempo'],
-        title='Proyección de Costos Futuros',
+        title='Análisis de Costos por PV',
         labels={
             'value': 'Costo',
             'variable': 'Tipo',
@@ -696,17 +726,17 @@ if len(df_futuro := convert_dict_to_df(costos_data_futuro)) > 0:
         height=600
     )
 
-    # Enhanced hover template for future data
-    fig_futuro.update_traces(
+    # Enhanced hover template
+    fig.update_traces(
         hovertemplate="<b>%{x}</b><br>" +
-                     "Valor: $%{y:,.2f}<br>" +
-                     "<extra></extra>",
+                    "Valor: $%{y:,.2f}<br>" +
+                    "<extra></extra>",  # This removes the secondary box
     )
 
-    fig_futuro = create_enhanced_chart(fig_futuro)
-    fig_futuro.update_layout(
+    fig = create_enhanced_chart(fig)
+    fig.update_layout(
         title={
-            'text': "Proyección de Costos Futuros<br><sub>Análisis de PVs en proceso</sub>",
+            'text': "Análisis de Costos Históricos<br><sub>Comparación de costos por KG y Tiempo</sub>",
             'y': 0.95,
             'x': 0.5,
             'xanchor': 'center',
@@ -718,9 +748,59 @@ if len(df_futuro := convert_dict_to_df(costos_data_futuro)) > 0:
             font_size=14,
             font_family="Inter",
             bordercolor="#2C3E50",
-            namelength=-1
+            namelength=-1  # Show full variable names
         )
     )
 
-    st.plotly_chart(fig_futuro, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # Do the same for the future data chart
+    if len(df_futuro := convert_dict_to_df(costos_data_futuro)) > 0:
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        df_futuro['pv'] = 'PV ' + df_futuro['pv']
+        df_futuro['total_kg'] = round(df_futuro['total_kg'] / 1000, 2)
+
+        fig_futuro = px.bar(
+            df_futuro,
+            x='pv',
+            y=['precio_kg', 'precio_tiempo'],
+            title='Proyección de Costos Futuros',
+            labels={
+                'value': 'Costo',
+                'variable': 'Tipo',
+                'pv': 'PV',
+                'precio_kg': 'Costo por KG',
+                'precio_tiempo': 'Costo por Tiempo'
+            },
+            height=600
+        )
+
+        # Enhanced hover template for future data
+        fig_futuro.update_traces(
+            hovertemplate="<b>%{x}</b><br>" +
+                        "Valor: $%{y:,.2f}<br>" +
+                        "<extra></extra>",
+        )
+
+        fig_futuro = create_enhanced_chart(fig_futuro)
+        fig_futuro.update_layout(
+            title={
+                'text': "Proyección de Costos Futuros<br><sub>Análisis de PVs en proceso</sub>",
+                'y': 0.95,
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'font': {'size': 20, 'color': '#2C3E50', 'family': 'Inter, bold'}
+            },
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=14,
+                font_family="Inter",
+                bordercolor="#2C3E50",
+                namelength=-1
+            )
+        )
+
+        st.plotly_chart(fig_futuro, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
