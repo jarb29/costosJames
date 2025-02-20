@@ -7,7 +7,6 @@ import streamlit as st
 import math
 import altair as alt
 import random
-
 # AWS Setup
 dynamo = boto3.resource('dynamodb', region_name='us-east-1')
 table = dynamo.Table('sam-stack-irlaa-LaserClosedTable-6CR5UN27N92Y')
@@ -280,7 +279,7 @@ def interactive_metric_card(label, value, details, css_class):
         </div>
         """ for k, v in details.items()
     ])
-    
+
     st.markdown(f"""
         <div class="metric-container {css_class}" id="{card_id}_container" 
              onclick="toggleCard('{card_id}')" style="cursor: pointer;">
@@ -302,13 +301,13 @@ def interactive_metric_card(label, value, details, css_class):
 # Helper Functions
 def colored_metric(label: str, value: str, css_class: str, small_value: str = None, difference: float = None):
     animation_delay = random.uniform(0.1, 0.5)
-    
+
     difference_html = ""
     if difference is not None:
         difference_str = "+" + str(round_to_two_decimals2(difference)) if float(difference) > 0 else "-" + str(round_to_two_decimals2(abs(difference)))
         difference_color = "#8B0000"  # Always dark red, regardless of positive or negative
         difference_html = f'<div class="positive-negative" style="color: {difference_color}">{difference_str}</div>'
-    
+
     st.markdown(f"""
         <div class="metric-container {css_class}" style="animation-delay: {animation_delay}s">
             <div class="metric-label">{label}</div>
@@ -356,13 +355,13 @@ with st.sidebar:
 
     # Get months and years
     months, years, cm, cy = get_months_and_years_since("01/04/2024")
-    
+
     # Calculate default indices
     if cm == 1:
         default_month_index = months.index(cm)
     else:
         default_month_index = months.index(cm) - 1
-    
+
     default_years_index = years.index(cy)
 
     # Enhanced selectboxes
@@ -381,7 +380,7 @@ with st.sidebar:
             <h3 style='color: black; font-size: 16px;'>Configuración de Costos</h3>
         </div>
     """, unsafe_allow_html=True)
-    
+
     precio_mes = st.number_input('Valor para Costo/Mes', value=10000000)
     precio_kg = st.number_input('Valor para Costo por Kg', value=360)
     precio_efectivo_minutos = st.number_input('Valor para Costo Hora/Corte', value=210000)
@@ -390,7 +389,7 @@ with st.sidebar:
 # with st.sidebar:
 #     st.markdown("### 🎨 Theme Settings")
 #     theme = st.selectbox('Choose Theme', ['Light', 'Dark'], key='theme_select')
-    
+
 #     if theme == 'Dark':
 #         st.markdown("""
 #             <script>
@@ -562,8 +561,8 @@ fig = px.bar(
     y=['precio_kg', 'precio_tiempo'],
     title='Análisis de Costos por PV',
     labels={
-        'value': 'Costo', 
-        'variable': 'Tipo', 
+        'value': 'Costo',
+        'variable': 'Tipo',
         'pv': 'PV',
         'precio_kg': 'Costo por KG',
         'precio_tiempo': 'Costo por Tiempo'
@@ -605,29 +604,29 @@ if len(df_futuro := convert_dict_to_df(costos_data_futuro)) > 0:
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     df_futuro['pv'] = 'PV ' + df_futuro['pv']
     df_futuro['total_kg'] = round(df_futuro['total_kg'] / 1000, 2)
-    
+
     fig_futuro = px.bar(
         df_futuro,
         x='pv',
         y=['precio_kg', 'precio_tiempo'],
         title='Proyección de Costos Futuros',
         labels={
-            'value': 'Costo', 
-            'variable': 'Tipo', 
+            'value': 'Costo',
+            'variable': 'Tipo',
             'pv': 'PV',
             'precio_kg': 'Costo por KG',
             'precio_tiempo': 'Costo por Tiempo'
         },
         height=600
     )
-    
+
     # Enhanced hover template for future data
     fig_futuro.update_traces(
         hovertemplate="<b>%{x}</b><br>" +
                      "Valor: $%{y:,.2f}<br>" +
                      "<extra></extra>",
     )
-    
+
     fig_futuro = create_enhanced_chart(fig_futuro)
     fig_futuro.update_layout(
         title={
@@ -646,6 +645,6 @@ if len(df_futuro := convert_dict_to_df(costos_data_futuro)) > 0:
             namelength=-1
         )
     )
-    
+
     st.plotly_chart(fig_futuro, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
