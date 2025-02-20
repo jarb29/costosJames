@@ -370,7 +370,7 @@ with st.sidebar:
 
     # 2. Improved Date Handling
     months, years, cm, cy = get_months_and_years_since("01/04/2024")
-    
+
     # Calculate default indices with error handling
     default_month_index = (months.index(cm) - 1) if cm > 1 else months.index(cm)
     default_month_index = max(0, min(default_month_index, len(months) - 1))
@@ -602,6 +602,7 @@ else:
     deberia_tiempo = precio_mes/tiempo_mes if tiempo_mes > 0 else 0
     tonFaltantes = max(0, precio_mes/precio_kg - kg_mes)
     laserFaltantes = max(0, precio_mes/precio_efectivo_minutos-tiempo_mes)
+
 
     # Main Dashboard Layout
     st.markdown("""
