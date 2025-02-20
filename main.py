@@ -23,7 +23,7 @@ st.set_page_config(
     page_title="Costo/Laser",
     layout="wide",  # Changed to wide layout
     page_icon="📉",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Enhanced CSS
