@@ -342,48 +342,124 @@ def create_enhanced_chart(fig):
     return fig
 
 # Sidebar Configuration
+# 1. Enhanced Streamlit UI Components
 with st.sidebar:
-    st.sidebar.image("data/logo.png", use_container_width=True)
+    # Improved image container with error handling
+    try:
+        st.sidebar.image("data/logo.png", use_container_width=True)
+    except:
+        st.error("Logo not found")
+
+    # Enhanced header with modern gradient and shadow
     st.markdown("""
-        <div style='background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); 
-                    padding: 15px; 
-                    border-radius: 10px; 
-                    margin-bottom: 20px'>
-            <h2 style='color: white; margin: 0;'>📅 Nave1/Laser Costos</h2>
+        <div style='
+            background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+            <h2 style='
+                color: white; 
+                margin: 0;
+                font-weight: 600;
+                text-align: center;'>
+                📅 Nave1/Laser Costos
+            </h2>
         </div>
     """, unsafe_allow_html=True)
 
-    # Get months and years
+    # 2. Improved Date Handling
     months, years, cm, cy = get_months_and_years_since("01/04/2024")
+    
+    # Calculate default indices with error handling
+    default_month_index = (months.index(cm) - 1) if cm > 1 else months.index(cm)
+    default_month_index = max(0, min(default_month_index, len(months) - 1))
+    default_years_index = years.index(cy) if cy in years else 0
 
-    # Calculate default indices
-    if cm == 1:
-        default_month_index = months.index(cm)
-    else:
-        default_month_index = months.index(cm) - 1
+    # 3. Enhanced Input Components with better layout
+    st.markdown("### 📅 Selección de Período")
+    date_cols = st.columns([1, 1])
+    with date_cols[0]:
+        selected_month = st.selectbox(
+            'Mes',
+            months,
+            index=default_month_index,
+            help="Seleccione el mes para el cálculo de costos"
+        )
+    with date_cols[1]:
+        selected_year = st.selectbox(
+            'Año',
+            years,
+            index=default_years_index,
+            help="Seleccione el año para el cálculo de costos"
+        )
 
-    default_years_index = years.index(cy)
-
-    # Enhanced selectboxes
-    col1, col2 = st.columns(2)
-    with col1:
-        selected_month = st.selectbox('Mes', months, index=default_month_index)
-    with col2:
-        selected_year = st.selectbox('Año', years, index=default_years_index)
-
-    # Cost inputs with enhanced styling
+    # 4. Styled Cost Configuration Section
     st.markdown("""
-        <div style='background: rgba(255,255,255,0.1); 
-                    padding: 15px; 
-                    border-radius: 10px; 
-                    margin: 20px 0;'>
-            <h3 style='color: black; font-size: 16px;'>Configuración de Costos</h3>
+        <div style='
+            background: linear-gradient(135deg, #f6f9fc 0%, #f0f4f8 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #e0e4e8;'>
+            <h3 style='
+                color: #1e3a8a;
+                font-size: 18px;
+                margin-bottom: 15px;
+                text-align: center;'>
+                💰 Configuración de Costos
+            </h3>
         </div>
     """, unsafe_allow_html=True)
 
-    precio_mes = st.number_input('Valor para Costo/Mes', value=10000000)
-    precio_kg = st.number_input('Valor para Costo por Kg', value=360)
-    precio_efectivo_minutos = st.number_input('Valor para Costo Hora/Corte', value=210000)
+    # Enhanced number inputs with validation and formatting
+    def format_number(value):
+        return f"${value:,.2f}"
+
+    precio_mes = st.number_input(
+        'Valor para Costo/Mes',
+        min_value=0.0,
+        value=10000000.0,
+        help="Ingrese el costo mensual",
+        format="%g"
+    )
+    st.caption(f"Valor formateado: {format_number(precio_mes)}")
+
+    precio_kg = st.number_input(
+        'Valor para Costo por Kg',
+        min_value=0.0,
+        value=360.0,
+        help="Ingrese el costo por kilogramo",
+        format="%g"
+    )
+    st.caption(f"Valor formateado: {format_number(precio_kg)}")
+
+    precio_efectivo_minutos = st.number_input(
+        'Valor para Costo Hora/Corte',
+        min_value=0.0,
+        value=210000.0,
+        help="Ingrese el costo por hora de corte",
+        format="%g"
+    )
+    st.caption(f"Valor formateado: {format_number(precio_efectivo_minutos)}")
+
+    # Add a summary card
+    st.markdown("""
+        <div style='
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #e0e4e8;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);'>
+            <p style='
+                color: #4b5563;
+                font-size: 14px;
+                margin: 0;'>
+                ℹ️ Los valores ingresados se utilizarán para calcular los costos totales.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
 # Add this after your existing sidebar content
 # with st.sidebar:
